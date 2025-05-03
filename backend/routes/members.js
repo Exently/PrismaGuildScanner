@@ -1,4 +1,3 @@
-// backend/routes/members.js
 const express = require('express');
 const axios = require('axios');
 const GuildMember = require('../models/GuildMember');
@@ -10,7 +9,7 @@ const {
     GUILD_NAME, GUILD_REALM, REGION, RAIDER_IO_API_KEY
 } = process.env;
 
-
+// Holt Mythic+ Vault-Run-Daten von Raider.io und berechnet Slots
 async function fetchVaultInfo(name, realmSlug) {
     const charSlug = name.toLowerCase();
     const url = 'https://raider.io/api/v1/characters/profile';
@@ -20,8 +19,8 @@ async function fetchVaultInfo(name, realmSlug) {
         name: charSlug,
         fields: 'mythic_plus_weekly_highest_level_runs'
     };
-    if (process.env.RAIDER_IO_API_KEY) {
-        params.access_key = process.env.RAIDER_IO_API_KEY;
+    if (RAIDER_IO_API_KEY) {
+        params.access_key = RAIDER_IO_API_KEY;
     }
 
     console.log('⤷ fetchVaultInfo called with', { realmSlug, charSlug, params });
@@ -56,7 +55,7 @@ async function fetchBnetToken() {
     return resp.data.access_token;
 }
 
-// POST /api/members/scan → Scan und speichern
+// GET /api/members/scan → Scan Guild-Roster, filter Level 80 und liefere reduziert
 router.get('/scan', auth, async (req, res) => {
     try {
         const token = await fetchBnetToken();
@@ -65,7 +64,6 @@ router.get('/scan', auth, async (req, res) => {
             headers: { Authorization: `Bearer ${token}` }
         });
 
-        // Nur Level‐80 filtern und auf die Felder reduzieren, die wir brauchen
         const lvl80 = data.members
             .filter(m => m.character.level === 80)
             .map(m => ({
@@ -85,15 +83,13 @@ router.get('/scan', auth, async (req, res) => {
     }
 });
 
-
-// POST /api/members → einzelnen Member tracken (in DB speichern)
+// POST /api/members → Tracke einzelnen Member in DB
 router.post('/', auth, async (req, res) => {
     try {
-        const { id, name, rank, level, class: cls, spec } = req.body;
-        // findOneAndUpdate mit upsert
+        const { id, name, rank, level, class: cls, spec, realm } = req.body;
         const member = await GuildMember.findOneAndUpdate(
             { id },
-            { id, name, rank, level, updatedAt: new Date() },
+            { id, name, rank, level, class: cls, spec, realm, updatedAt: new Date() },
             { upsert: true, new: true }
         );
         res.json(member);
@@ -103,25 +99,30 @@ router.post('/', auth, async (req, res) => {
     }
 });
 
-// GET /api/members → Liste aller Member
+// GET /api/members → Liste aller getrackten Member mit Vault-Slots
 router.get('/', auth, async (req, res) => {
-    const members = await GuildMember.find().sort('name');
-    const enriched = await Promise.all(
-        members.map(async m => {
-            const { slot1, slot2, slot3 } = await fetchVaultInfo(m.name, m.realm);
-            return {
-                id: m.id,
-                name: m.name,
-                level: m.level,
-                realm: m.realm,
-                slot1, slot2, slot3
-            };
-        })
-    );
-    res.json(enriched);
+    try {
+        const members = await GuildMember.find().sort('name');
+        const enriched = await Promise.all(
+            members.map(async m => {
+                const { slot1, slot2, slot3 } = await fetchVaultInfo(m.name, m.realm);
+                return {
+                    id: m.id,
+                    name: m.name,
+                    level: m.level,
+                    realm: m.realm,
+                    slot1, slot2, slot3
+                };
+            })
+        );
+        res.json(enriched);
+    } catch (err) {
+        console.error('Load-Fehler:', err.message);
+        res.status(500).json({ message: 'Fehler beim Laden der Mitglieder' });
+    }
 });
 
-// DELETE /api/members/:id → einzelnen Member löschen
+// DELETE /api/members/:id → Lösche einzelnen Member
 router.delete('/:id', auth, async (req, res) => {
     await GuildMember.deleteOne({ id: req.params.id });
     res.json({ message: 'Member gelöscht' });
