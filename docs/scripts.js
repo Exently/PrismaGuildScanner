@@ -98,8 +98,9 @@ function renderMembers(members) {
     tr.innerHTML = `
       <td class="p-2">${m.name}</td>
       <td class="p-2 text-center">${m.level}</td>
-      <td class="p-2 text-center">${m.class}</td>
-      <td class="p-2 text-center">${m.spec || ''}</td>
+      <td class="p-2 text-center">${m.slot1}</td>
+      <td class="p-2 text-center">${m.slot2}</td>
+      <td class="p-2 text-center">${m.slot3}</td>
       <td class="p-2 text-center">
         <button onclick="deleteMember(${m.id})"
                 class="px-2 py-1 bg-red-600 rounded">✕</button>

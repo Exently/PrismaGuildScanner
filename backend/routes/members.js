@@ -12,26 +12,33 @@ const {
 
 async function fetchVaultInfo(name) {
     const realm = GUILD_REALM.toLowerCase();
-    const url = `https://raider.io/api/v1/characters/profile`;
+    const url   = 'https://raider.io/api/v1/characters/profile';
     const params = {
       region: REGION,
       realm,
       name,
       fields: 'mythic_plus_weekly_highest_level_runs'
     };
-    if (RAIDER_IO_API_KEY) params.api_key = RAIDER_IO_API_KEY;
+    if (process.env.RAIDER_IO_API_KEY) params.api_key = process.env.RAIDER_IO_API_KEY;
   
     const { data } = await axios.get(url, { params });
-    // runs ist ein Array mit deinen drei besten Keys der Woche
     const runs = data.mythic_plus_weekly_highest_level_runs || [];
-    const vaultSlots = runs.length;
-    const vaultLevel = runs.reduce(
-      (max, r) => Math.max(max, r.mythic_level), 
-      0
-    );
-    return { vaultSlots, vaultLevel };
+  
+    // Slot-1 basiert auf 2nd highest run:
+    const level2 = runs.length >= 2 ? runs[1].mythic_level : 0;
+    const slot1  = level2 >= 10 ? 'MAX' : level2;
+  
+    // Slot-2 basiert auf 4th highest run:
+    const level4 = runs.length >= 4 ? runs[3].mythic_level : 0;
+    const slot2  = level4 >= 10 ? 'MAX' : level4;
+  
+    // Slot-3 basiert auf 8th highest run:
+    const level8 = runs.length >= 8 ? runs[7].mythic_level : 0;
+    const slot3  = level8 >= 10 ? 'MAX' : level8;
+  
+    return { slot1, slot2, slot3 };
   }
-
+  
 // Helper: Blizzard OAuth-Token holen
 async function fetchBnetToken() {
     const resp = await axios.post(
@@ -90,27 +97,19 @@ router.post('/', auth, async (req, res) => {
 
 // GET /api/members → Liste aller Member
 router.get('/', auth, async (req, res) => {
-    try {
-      const members = await GuildMember.find().sort('name');
-      // für jeden DB-Eintrag Vault-Daten holen
-      const enriched = await Promise.all(
-        members.map(async m => {
-          const { vaultSlots, vaultLevel } = await fetchVaultInfo(m.name);
-          return {
-            id: m.id,
-            name: m.name,
-            level: m.level,
-            // füge die Vault-Infos hinzu
-            vaultSlots,
-            vaultLevel
-          };
-        })
-      );
-      res.json(enriched);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Fehler beim Laden der Mitglieder' });
-    }
+    const members = await GuildMember.find().sort('name');
+    const enriched = await Promise.all(
+      members.map(async m => {
+        const { slot1, slot2, slot3 } = await fetchVaultInfo(m.name);
+        return {
+          id: m.id,
+          name: m.name,
+          level: m.level,
+          slot1, slot2, slot3
+        };
+      })
+    );
+    res.json(enriched);
   });
 
 // DELETE /api/members/:id → einzelnen Member löschen
