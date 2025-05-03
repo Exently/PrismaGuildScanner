@@ -7,8 +7,30 @@ const auth = require('./authMiddleware');
 const router = express.Router();
 const {
     BNET_CLIENT_ID, BNET_CLIENT_SECRET,
-    GUILD_NAME, GUILD_REALM, REGION
+    GUILD_NAME, GUILD_REALM, REGION, RAIDER_IO_API_KEY
 } = process.env;
+
+async function fetchVaultInfo(name) {
+    const realm = GUILD_REALM.toLowerCase();
+    const url = `https://raider.io/api/v1/characters/profile`;
+    const params = {
+      region: REGION,
+      realm,
+      name,
+      fields: 'mythic_plus_weekly_highest_level_runs'
+    };
+    if (RAIDER_IO_API_KEY) params.api_key = RAIDER_IO_API_KEY;
+  
+    const { data } = await axios.get(url, { params });
+    // runs ist ein Array mit deinen drei besten Keys der Woche
+    const runs = data.mythic_plus_weekly_highest_level_runs || [];
+    const vaultSlots = runs.length;
+    const vaultLevel = runs.reduce(
+      (max, r) => Math.max(max, r.mythic_level), 
+      0
+    );
+    return { vaultSlots, vaultLevel };
+  }
 
 // Helper: Blizzard OAuth-Token holen
 async function fetchBnetToken() {
@@ -56,7 +78,7 @@ router.post('/', auth, async (req, res) => {
         // findOneAndUpdate mit upsert
         const member = await GuildMember.findOneAndUpdate(
             { id },
-            { id, name, rank, level, class: cls, spec, updatedAt: new Date() },
+            { id, name, rank, level, vaultSlots, vaultLevel, updatedAt: new Date() },
             { upsert: true, new: true }
         );
         res.json(member);
@@ -68,9 +90,28 @@ router.post('/', auth, async (req, res) => {
 
 // GET /api/members → Liste aller Member
 router.get('/', auth, async (req, res) => {
-    const members = await GuildMember.find().sort('name');
-    res.json(members);
-});
+    try {
+      const members = await GuildMember.find().sort('name');
+      // für jeden DB-Eintrag Vault-Daten holen
+      const enriched = await Promise.all(
+        members.map(async m => {
+          const { vaultSlots, vaultLevel } = await fetchVaultInfo(m.name);
+          return {
+            id: m.id,
+            name: m.name,
+            level: m.level,
+            // füge die Vault-Infos hinzu
+            vaultSlots,
+            vaultLevel
+          };
+        })
+      );
+      res.json(enriched);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Fehler beim Laden der Mitglieder' });
+    }
+  });
 
 // DELETE /api/members/:id → einzelnen Member löschen
 router.delete('/:id', auth, async (req, res) => {

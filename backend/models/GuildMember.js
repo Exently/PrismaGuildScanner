@@ -14,6 +14,14 @@ const GuildMemberSchema = new mongoose.Schema({
   level: Number,
   class: String,
   spec: String,
+  vaultSlots: {
+    type: Number,
+    default: 0
+  },
+  vaultLevel: {
+    type: Number,
+    default: 0
+  },
   updatedAt: {
     type: Date,
     default: Date.now
