@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Prisma Guild Scanner</title>
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body class="bg-gray-900 text-gray-200 p-4">
+  <!-- Login -->
+  <div id="login" class="max-w-sm mx-auto">
+    <h1 class="text-2xl mb-4">Login</h1>
+    <input id="user" type="text" placeholder="Username"
+           class="w-full p-2 mb-2 bg-gray-800 rounded" />
+    <input id="pass" type="password" placeholder="Passwort"
+           class="w-full p-2 mb-4 bg-gray-800 rounded" />
+    <button id="btnLogin"
+            class="w-full p-2 bg-purple-700 rounded hover:bg-purple-600">
+      Einloggen
+    </button>
+  </div>
+  <!-- Haupt-App -->
+  <div id="app" class="hidden max-w-3xl mx-auto">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl">Prisma Guild Scanner</h1>
+      <button id="btnLogout"
+              class="p-2 bg-red-600 rounded hover:bg-red-500">
+        Logout
+      </button>
+    </div>
+    <div class="space-x-2 mb-4">
+      <button id="btnScan"
+              class="px-4 py-2 bg-purple-700 rounded hover:bg-purple-600">
+        Scan Guild
+      </button>
+      <button id="btnRefresh"
+              class="px-4 py-2 bg-gray-700 rounded hover:bg-gray-600">
+        Refresh
+      </button>
+    </div>
+    <table class="min-w-full bg-gray-800 rounded overflow-hidden">
+      <thead>
+        <tr class="border-b border-gray-700">
+          <th class="p-2 text-left">Name</th>
+          <th class="p-2 text-center">Level</th>
+          <th class="p-2 text-center">Klasse</th>
+          <th class="p-2 text-center">Aktion</th>
+        </tr>
+      </thead>
+      <tbody id="memberList"></tbody>
+    </table>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
