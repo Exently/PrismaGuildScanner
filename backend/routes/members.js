@@ -92,7 +92,7 @@ router.post('/', auth, async (req, res) => {
         // findOneAndUpdate mit upsert
         const member = await GuildMember.findOneAndUpdate(
             { id },
-            { id, name, rank, level, vaultSlots, vaultLevel, updatedAt: new Date() },
+            { id, name, rank, level, updatedAt: new Date() },
             { upsert: true, new: true }
         );
         res.json(member);
