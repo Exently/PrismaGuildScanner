@@ -23,11 +23,9 @@ async function fetchVaultInfo(name, realmSlug) {
         params.access_key = RAIDER_IO_API_KEY;
     }
 
-    console.log('⤷ fetchVaultInfo called with', { realmSlug, charSlug, params });
     try {
         const { data } = await axios.get(url, { params });
         const runs = data.mythic_plus_weekly_highest_level_runs || [];
-        console.log(`⤷ Raider.io returned ${runs.length} runs for ${charSlug}@${realmSlug}`, runs);
 
         // Slot-1 = 2nd run, Slot-2 = 4th, Slot-3 = 8th
         const lvl2 = runs.length >= 2 ? runs[1].mythic_level : 0;
