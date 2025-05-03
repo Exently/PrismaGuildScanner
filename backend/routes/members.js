@@ -28,11 +28,11 @@ async function fetchVaultInfo(name, realmSlug) {
         const runs = data.mythic_plus_weekly_highest_level_runs || [];
 
         // Slot-1 = 2nd run, Slot-2 = 4th, Slot-3 = 8th
-        const lvl2 = runs.length >= 2 ? runs[1].mythic_level : 0;
+        const lvl1 = runs.length >= 1 ? runs[0].mythic_level : 0;
         const lvl4 = runs.length >= 4 ? runs[3].mythic_level : 0;
         const lvl8 = runs.length >= 8 ? runs[7].mythic_level : 0;
 
-        const slot1 = lvl2 >= 10 ? 'MAX' : lvl2;
+        const slot1 = lvl1 >= 10 ? 'MAX' : lvl1;
         const slot2 = lvl4 >= 10 ? 'MAX' : lvl4;
         const slot3 = lvl8 >= 10 ? 'MAX' : lvl8;
 
