@@ -1,4 +1,5 @@
 require('dotenv').config();
+const GuildMember = require('./models/GuildMember');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
