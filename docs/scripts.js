@@ -1,4 +1,4 @@
-const apiBase = 'https://<dein-backend>.onrender.com/api';
+const apiBase = 'https://prismaguildscanner.onrender.com/';
 let token = null;
 
 // Hilfsfunktion für API-Calls
