@@ -128,3 +128,22 @@ async function deleteMember(id) {
 
 // Optional: initial focus
 document.getElementById('user').focus();
+
+const deleteAllBtn = document.getElementById('btnDeleteAll');
+
+document.getElementById('searchTracked').addEventListener('input', e => {
+  const term = e.target.value.toLowerCase();
+  if (term === 'deleteall') {
+    deleteAllBtn.classList.remove('hidden');
+  } else {
+    deleteAllBtn.classList.add('hidden');
+  }
+});
+
+deleteAllBtn.onclick = async () => {
+  if (!confirm('Möchtest du wirklich alle getrackten Mitglieder löschen?')) return;
+  for (const m of trackedMembers) {
+    await call(`/members/${m.id}`, 'DELETE');
+  }
+  refreshTracked();
+};
