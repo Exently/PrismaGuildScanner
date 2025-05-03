@@ -10,13 +10,13 @@ const {
     GUILD_NAME, GUILD_REALM, REGION, RAIDER_IO_API_KEY
 } = process.env;
 
-async function fetchVaultInfo(name) {
+async function fetchVaultInfo(name, realmSlug) {
     const realmSlug = GUILD_REALM.toLowerCase();
     const charSlug = name.toLowerCase();       // <— Name auch kleinschreiben!
     const url = 'https://raider.io/api/v1/characters/profile';
     const params = {
         region: REGION,                           // z.B. "eu"
-        realm: realmSlug,                         // "blackmoore"
+        realm: realmSlug,                         
         name: charSlug,                          // "verel"
         fields: 'mythic_plus_weekly_highest_level_runs'
     };
@@ -74,7 +74,8 @@ router.get('/scan', auth, async (req, res) => {
                 rank: m.rank,
                 level: m.character.level,
                 class: m.character.playable_class.name,
-                spec: m.character.active_spec?.name || null
+                spec: m.character.active_spec?.name || null,
+                realm: m.character.realm.slug
             }));
 
         return res.json(lvl80);
@@ -107,11 +108,12 @@ router.get('/', auth, async (req, res) => {
     const members = await GuildMember.find().sort('name');
     const enriched = await Promise.all(
         members.map(async m => {
-            const { slot1, slot2, slot3 } = await fetchVaultInfo(m.name);
+            const { slot1, slot2, slot3 } = await fetchVaultInfo(m.name, m.realm);
             return {
                 id: m.id,
                 name: m.name,
                 level: m.level,
+                realm: m.realm,
                 slot1, slot2, slot3
             };
         })
