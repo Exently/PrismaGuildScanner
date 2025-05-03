@@ -39,7 +39,7 @@ router.post('/scan', auth, async (req, res) => {
           rank: m.rank,
           level: m.character.level,
           class: m.character.playable_class.name,
-          spec: m.character.active_spec.name,
+          spec: m.character.active_spec?.name || null,
           updatedAt: new Date()
         },
         upsert: true
