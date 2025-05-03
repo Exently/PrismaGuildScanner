@@ -11,7 +11,6 @@ const {
 } = process.env;
 
 async function fetchVaultInfo(name, realmSlug) {
-    const realmSlug = GUILD_REALM.toLowerCase();
     const charSlug = name.toLowerCase();       // <— Name auch kleinschreiben!
     const url = 'https://raider.io/api/v1/characters/profile';
     const params = {
