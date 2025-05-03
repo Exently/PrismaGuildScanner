@@ -1,5 +1,5 @@
 const apiBase = 'https://prismaguildscanner.onrender.com/';
-let token = null;
+let token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiUFJJU01BIiwiaWF0IjoxNzQ2Mjg2NjczLCJleHAiOjE3NDYzMTU0NzN9.Y-aBYidcuUxw_aM8u9rstyMGkQNjhTzEEoqrl1JzAe0;
 
 // Hilfsfunktion für API-Calls
 async function call(path, method='GET', body) {
