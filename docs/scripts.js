@@ -1,9 +1,11 @@
+// scripts.js - Vanilla JS frontend for Prisma Guild Scanner
+
 const apiBase = 'https://prismaguildscanner.onrender.com/api';
 let token = null;
 let trackedMembers = [];
 let availableMembers = [];
 
-// Helper: API-Call mit Token-Auth
+// Helper: API-Call with Token-Auth
 async function call(path, method = 'GET', body) {
   const opts = { method, headers: {} };
   if (token) opts.headers['Authorization'] = `Bearer ${token}`;
@@ -54,7 +56,7 @@ function renderAvailable(list) {
   container.innerHTML = '';
   list.forEach(m => {
     const btn = document.createElement('button');
-    btn.textContent = `${m.name} (${m.class})`;
+    btn.textContent = `${m.name}`;
     btn.className = 'w-full text-left p-2 bg-gray-700 rounded hover:bg-gray-600';
     btn.onclick = async () => {
       await call('/members', 'POST', m);
@@ -72,7 +74,6 @@ document.getElementById('searchAvail').addEventListener('input', e => {
   renderAvailable(
     availableMembers.filter(m =>
       m.name.toLowerCase().includes(term) ||
-      m.class.toLowerCase().includes(term) ||
       String(m.level).includes(term)
     )
   );
@@ -115,8 +116,10 @@ document.getElementById('searchTracked').addEventListener('input', e => {
   renderMembers(
     trackedMembers.filter(m =>
       m.name.toLowerCase().includes(term) ||
-      m.class.toLowerCase().includes(term) ||
-      String(m.level).includes(term)
+      String(m.level).includes(term) ||
+      String(m.slot1).toLowerCase().includes(term) ||
+      String(m.slot2).toLowerCase().includes(term) ||
+      String(m.slot3).toLowerCase().includes(term)
     )
   );
 });
@@ -127,20 +130,16 @@ async function deleteMember(id) {
   refreshTracked();
 }
 
-// Optional: initial focus
-document.getElementById('user').focus();
-
+// Secret Delete All Button
 const deleteAllBtn = document.getElementById('btnDeleteAll');
-
-document.getElementById('searchTracked').addEventListener('input', e => {
-  const term = e.target.value.toLowerCase();
-  if (term === 'deleteall') {
+const searchTrackedInput = document.getElementById('searchTracked');
+searchTrackedInput.addEventListener('input', e => {
+  if (e.target.value.toLowerCase() === 'deleteall') {
     deleteAllBtn.classList.remove('hidden');
   } else {
     deleteAllBtn.classList.add('hidden');
   }
 });
-
 deleteAllBtn.onclick = async () => {
   if (!confirm('Möchtest du wirklich alle getrackten Mitglieder löschen?')) return;
   for (const m of trackedMembers) {
@@ -148,3 +147,6 @@ deleteAllBtn.onclick = async () => {
   }
   refreshTracked();
 };
+
+// Initial focus
+document.getElementById('user').focus();
