@@ -1,5 +1,19 @@
 const apiBase = 'https://prismaguildscanner.onrender.com/api';
 let token = null;
+let trackedMembers = [];
+let availableMembers = [];
+
+
+document.getElementById('searchTracked').addEventListener('input', e => {
+  const term = e.target.value.toLowerCase();
+  renderMembers(
+    trackedMembers.filter(m =>
+      m.name.toLowerCase().includes(term) ||
+      m.class.toLowerCase().includes(term) ||
+      String(m.level).includes(term)
+    )
+  );
+});
 
 // Hilfsfunktion für API-Calls
 async function call(path, method='GET', body) {
@@ -36,6 +50,16 @@ document.getElementById('btnLogout').onclick = () => {
   document.getElementById('login').classList.remove('hidden');
 };
 
+
+document.getElementById('btnLoad').onclick = async () => {
+  try {
+    availableMembers = await call('/members/scan', 'GET');
+    renderAvailable(availableMembers);
+  } catch (e) {
+    alert('Load failed: ' + e.message);
+  }
+};
+
 // Scan & Refresh
 document.getElementById('btnScan').onclick = async () => {
   await call('/members/scan', 'POST');
@@ -44,26 +68,61 @@ document.getElementById('btnScan').onclick = async () => {
 document.getElementById('btnRefresh').onclick = refreshMembers;
 
 // Liste neu laden
-async function refreshMembers() {
+async function refreshTracked() {
   try {
-    const members = await call('/members');
-    const tbody = document.getElementById('memberList');
-    tbody.innerHTML = '';
-    members.forEach(m => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="p-2">${m.name}</td>
-        <td class="p-2 text-center">${m.level}</td>
-        <td class="p-2 text-center">${m.class}</td>
-        <td class="p-2 text-center">
-          <button onclick="deleteMember(${m.id})"
-                  class="px-2 py-1 bg-red-600 rounded">✕</button>
-        </td>`;
-      tbody.appendChild(tr);
-    });
+    trackedMembers = await call('/', 'GET');
+    renderMembers(trackedMembers);
   } catch {
     alert('Fehler beim Laden');
   }
+}
+
+function renderAvailable(list) {
+  const container = document.getElementById('availList');
+  container.innerHTML = '';
+  list.forEach(m => {
+    const btn = document.createElement('button');
+    btn.textContent = `${m.name} (${m.class})`;
+    btn.className = 'w-full text-left p-2 bg-gray-700 rounded hover:bg-gray-600';
+    btn.onclick = async () => {
+      // Tracken
+      await call('/', 'POST', m);
+      // Aus availability entfernen und in tracked verschieben
+      availableMembers = availableMembers.filter(x => x.id !== m.id);
+      renderAvailable(availableMembers);
+      refreshTracked();
+    };
+    container.appendChild(btn);
+  });
+}
+
+document.getElementById('searchAvail').addEventListener('input', e => {
+  const term = e.target.value.toLowerCase();
+  renderAvailable(
+    availableMembers.filter(m =>
+      m.name.toLowerCase().includes(term) ||
+      m.class.toLowerCase().includes(term) ||
+      String(m.level).includes(term)
+    )
+  );
+});
+
+function renderMembers(members) {
+  const tbody = document.getElementById('memberList');
+  tbody.innerHTML = '';
+  members.forEach(m => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-700 transition-colors';
+    tr.innerHTML = `
+      <td class="p-2">${m.name}</td>
+      <td class="p-2 text-center">${m.level}</td>
+      <td class="p-2 text-center">${m.class}</td>
+      <td class="p-2 text-center">
+        <button onclick="deleteMember(${m.id})"
+                class="px-2 py-1 bg-red-600 rounded">✕</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
 }
 
 // Member löschen
