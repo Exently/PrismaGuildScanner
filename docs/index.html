@@ -28,9 +28,12 @@
         Logout
       </button>
     </div>
-    
+
     <section>
       <h2 class="text-xl mb-2">Tracked Members</h2>
+      <button id="btnRefresh" class="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600">
+        Refresh
+      </button>
       <input id="searchTracked" type="text" placeholder="Search Tracked…"
         class="w-full p-2 mb-2 bg-gray-800 rounded focus:outline-none focus:ring-2 focus:ring-purple-600" />
       <!-- Hidden Delete All Button, sichtbar bei Secret-Keyword -->
@@ -61,8 +64,16 @@
     <section>
       <input id="searchAvail" type="text" placeholder="Search Available…"
         class="w-full p-2 mb-2 bg-gray-800 rounded focus:outline-none focus:ring-2 focus:ring-purple-600" />
-      <div id="availList" class="space-y-1 max-h-64 overflow-y-auto bg-gray-800 p-2 rounded">
-        <!-- renderAvailable() füllt hier Buttons zum Tracken -->
+      <div class="overflow-x-auto bg-gray-800 p-2 rounded">
+        <table class="min-w-full bg-gray-800 rounded overflow-hidden">
+          <thead>
+            <tr class="border-b border-gray-700">
+              <th class="p-2 text-left">Name</th>
+              <th class="p-2 text-center">Aktion</th>
+            </tr>
+          </thead>
+          <tbody id="availList"></tbody>
+        </table>
       </div>
       <button id="btnLoad" class="mt-2 px-4 py-2 bg-purple-700 rounded hover:bg-purple-600">
         Load All Members

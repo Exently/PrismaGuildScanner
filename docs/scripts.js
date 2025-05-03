@@ -21,10 +21,15 @@ async function call(path, method = 'GET', body) {
 // Login-Handler
 document.getElementById('btnLogin').onclick = async () => {
   try {
-    const u = document.getElementById('user').value;
-    const p = document.getElementById('pass').value;
+    const userInput = document.getElementById('user');
+    const passInput = document.getElementById('pass');
+    const u = userInput.value;
+    const p = passInput.value;
     const data = await call('/auth/login', 'POST', { username: u, password: p });
     token = data.token;
+    // Clear login fields
+    userInput.value = '';
+    passInput.value = '';
     document.getElementById('login').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     refreshTracked();
@@ -35,10 +40,45 @@ document.getElementById('btnLogin').onclick = async () => {
 
 // Logout-Handler
 document.getElementById('btnLogout').onclick = () => {
-  token = null;
-  document.getElementById('app').classList.add('hidden');
-  document.getElementById('login').classList.remove('hidden');
+  const userInput = document.getElementById('user');
+  const passInput = document.getElementById('pass');
+   // Clear login fields
+   userInput.value = '';
+   passInput.value = '';
+   document.getElementById('app').classList.add('hidden');
+   document.getElementById('login').classList.remove('hidden');
 };
+
+function renderAvailable(list) {
+  const tbody = document.getElementById('availList');
+  tbody.innerHTML = '';
+  list.forEach(m => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-700';
+    tr.innerHTML = `
+      <td class="p-2">${m.name}</td>
+      <td class="p-2 text-center">
+        <button class="px-2 py-1 bg-green-600 rounded hover:bg-green-500"
+                onclick="trackMember(${m.id}, '${m.name}')">
+          Track
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function trackMember(id, name) {
+  try {
+    const member = availableMembers.find(m => m.id === id);
+    await call('/members', 'POST', member);
+    // Remove from available
+    availableMembers = availableMembers.filter(m => m.id !== id);
+    renderAvailable(availableMembers);
+    refreshTracked();
+  } catch (e) {
+    alert('Track failed: ' + e.message);
+  }
+}
 
 // Load Level 80 Members
 document.getElementById('btnLoad').onclick = async () => {
@@ -109,6 +149,10 @@ function renderMembers(members) {
     tbody.appendChild(tr);
   });
 }
+
+document.getElementById('btnRefresh').onclick = () => {
+  refreshTracked();
+};
 
 // Filter Tracked List
 document.getElementById('searchTracked').addEventListener('input', e => {
