@@ -10,22 +10,25 @@ const {
     GUILD_NAME, GUILD_REALM, REGION, RAIDER_IO_API_KEY
 } = process.env;
 
+
 async function fetchVaultInfo(name, realmSlug) {
-    const charSlug = name.toLowerCase();       // <— Name auch kleinschreiben!
+    const charSlug = name.toLowerCase();
     const url = 'https://raider.io/api/v1/characters/profile';
     const params = {
-        region: REGION,                           // z.B. "eu"
-        realm: realmSlug,                         
-        name: charSlug,                          // "verel"
+        region: REGION,
+        realm: realmSlug,
+        name: charSlug,
         fields: 'mythic_plus_weekly_highest_level_runs'
     };
     if (process.env.RAIDER_IO_API_KEY) {
         params.access_key = process.env.RAIDER_IO_API_KEY;
     }
 
+    console.log('⤷ fetchVaultInfo called with', { realmSlug, charSlug, params });
     try {
         const { data } = await axios.get(url, { params });
         const runs = data.mythic_plus_weekly_highest_level_runs || [];
+        console.log(`⤷ Raider.io returned ${runs.length} runs for ${charSlug}@${realmSlug}`, runs);
 
         // Slot-1 = 2nd run, Slot-2 = 4th, Slot-3 = 8th
         const lvl2 = runs.length >= 2 ? runs[1].mythic_level : 0;
@@ -38,9 +41,7 @@ async function fetchVaultInfo(name, realmSlug) {
 
         return { slot1, slot2, slot3 };
     } catch (err) {
-        console.error(`Raider.io-Error for ${charSlug}@${realmSlug}:`,
-            err.response?.status, err.response?.data || err.message);
-        // Fallback auf 0, damit ein fehlschlagender Call nicht die ganze Route killt
+        console.error('⤷ Raider.io-Error:', err.response?.status, err.response?.data);
         return { slot1: 0, slot2: 0, slot3: 0 };
     }
 }
