@@ -18,16 +18,32 @@ async function call(path, method = 'GET', body) {
   return res.json();
 }
 
-// Login-Handler
-document.getElementById('btnLogin').onclick = async () => {
+// Login-Handler with loading state, spinner and hint
+const loginBtn = document.getElementById('btnLogin');
+loginBtn.onclick = async () => {
+  const btn = loginBtn;
+  const userInput = document.getElementById('user');
+  const passInput = document.getElementById('pass');
+  const originalHTML = btn.innerHTML;
+  btn.disabled = true;
+  // Insert spinner
+  btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+  </svg>Loading...`;
+  // Show hint after 5s
+  const hintTimer = setTimeout(() => {
+    btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-2 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+    </svg>Login can take time after long inactivity`;
+  }, 5000);
+
   try {
-    const userInput = document.getElementById('user');
-    const passInput = document.getElementById('pass');
     const u = userInput.value;
     const p = passInput.value;
     const data = await call('/auth/login', 'POST', { username: u, password: p });
     token = data.token;
-    // Clear login fields
     userInput.value = '';
     passInput.value = '';
     document.getElementById('login').classList.add('hidden');
@@ -35,6 +51,10 @@ document.getElementById('btnLogin').onclick = async () => {
     refreshTracked();
   } catch {
     alert('Login fehlgeschlagen');
+  } finally {
+    clearTimeout(hintTimer);
+    btn.innerHTML = originalHTML;
+    btn.disabled = false;
   }
 };
 
@@ -71,7 +91,7 @@ function renderAvailable(list) {
       <td class="p-2">${m.name}</td>
       <td class="p-2 text-center">
         <button class="px-2 py-1 bg-green-600 rounded hover:bg-green-500"
-                onclick="trackMember(${m.id}, '${m.name}')">
+                onclick="trackMember(${m.id})">
           Track
         </button>
       </td>`;
@@ -80,7 +100,7 @@ function renderAvailable(list) {
 }
 
 // Track a member: POST & refresh
-async function trackMember(id, name) {
+async function trackMember(id) {
   try {
     const member = availableMembers.find(m => m.id === id);
     await call('/members', 'POST', member);
@@ -136,8 +156,7 @@ document.getElementById('searchAvail').addEventListener('input', e => {
   const term = e.target.value.toLowerCase();
   renderAvailable(
     availableMembers.filter(m =>
-      m.name.toLowerCase().includes(term) ||
-      String(m.level).includes(term)
+      m.name.toLowerCase().includes(term)
     )
   );
 });
@@ -147,11 +166,7 @@ document.getElementById('searchTracked').addEventListener('input', e => {
   const term = e.target.value.toLowerCase();
   renderMembers(
     trackedMembers.filter(m =>
-      m.name.toLowerCase().includes(term) ||
-      String(m.level).includes(term) ||
-      String(m.slot1).toLowerCase().includes(term) ||
-      String(m.slot2).toLowerCase().includes(term) ||
-      String(m.slot3).toLowerCase().includes(term)
+      m.name.toLowerCase().includes(term)
     )
   );
 });
@@ -182,4 +197,3 @@ deleteAllBtn.onclick = async () => {
 
 // Initial focus
 document.getElementById('user').focus();
-
